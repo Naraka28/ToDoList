@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis Tareas</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+      }
+      h1 {
+        font-family: "DM Serif Display", serif;
+      }
+
+      /* subtle noise texture on bg */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+        background-size: 200px;
+        pointer-events: none;
+      }
+
+      /* list item slide-in */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      #pending-list li,
+      #done-list li {
+        animation: slideIn 0.18s ease both;
+      }
+
+      /* focus ring */
+      input[type="text"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #a8a29e;
+      }
+
+      /* scrollbar */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d6d3d1;
+        border-radius: 9999px;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-stone-50 text-stone-800 px-4 py-10">
+    <!-- ── Card ──────────────────────────────────────────────────────────── -->
+    <main class="mx-auto w-full max-w-xl">
+      <!-- Header -->
+      <div class="mb-8 flex items-end justify-between">
+        <div>
+          <p
+            class="text-xs font-medium uppercase tracking-widest text-stone-400 mb-1"
+          >
+            Tu lista
+          </p>
+          <h1 class="text-4xl text-stone-800 leading-tight">Tareas</h1>
+        </div>
+        <button
+          id="delete-all-btn"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-400 border border-stone-200 bg-white hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all duration-200 shadow-sm"
+          title="Eliminar todas las tareas"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4h6v2" />
+          </svg>
+          Eliminar todo
+        </button>
+      </div>
+
+      <!-- Add task form -->
+      <form id="todo-form" class="flex gap-2 mb-8">
+        <input
+          id="todo-input"
+          type="text"
+          placeholder="Agregar nueva tarea…"
+          maxlength="120"
+          required
+          class="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-white text-sm text-stone-700 placeholder-stone-300 shadow-sm transition-all duration-200"
+        />
+        <button
+          type="submit"
+          class="px-4 py-3 rounded-xl bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 active:scale-95 shadow-sm transition-all duration-150 shrink-0"
+        >
+          Agregar
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="h-px bg-stone-200 mb-6"></div>
+
+      <!-- ── Pending section ──────────────────────────────────────────────── -->
+      <section class="mb-8">
+        <div class="flex items-center gap-2 mb-3">
+          <span
+            class="text-xs font-semibold uppercase tracking-widest text-stone-400"
+            >Pendientes</span
+          >
+          <span
+            id="pending-count"
+            class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-200 text-stone-600 text-xs font-semibold"
+            >0</span
+          >
+        </div>
+
+        <ul id="pending-list" class="flex flex-col gap-2"></ul>
+
+        <!-- Empty state -->
+        <div
+          id="empty-pending"
+          class="hidden flex-col items-center gap-2 py-8 text-stone-300"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-10 h-10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          <p class="text-sm">Sin tareas pendientes</p>
+        </div>
+      </section>
+
+      <!-- ── Completed section ────────────────────────────────────────────── -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span
+            class="text-xs font-semibold uppercase tracking-widest text-stone-400"
+            >Completadas</span
+          >
+          <span
+            id="done-count"
+            class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-100 text-stone-400 text-xs font-semibold"
+            >0</span
+          >
+        </div>
+
+        <ul id="done-list" class="flex flex-col gap-2"></ul>
+
+        <!-- Empty state -->
+        <div
+          id="empty-done"
+          class="hidden flex-col items-center gap-2 py-8 text-stone-200"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-10 h-10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          <p class="text-sm">Aún no hay tareas completadas</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Toast ──────────────────────────────────────────────────────────── -->
+    <div
+      id="toast"
+      style="
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+      "
+      class="fixed bottom-6 left-1/2 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg bg-stone-800 text-stone-100 z-50 pointer-events-none"
+    ></div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
