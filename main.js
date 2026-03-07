@@ -2,7 +2,7 @@ import { getAll, create, deleteAll } from "./services/ToDo.service.js";
 import { ToDoItem } from "./ToDoItem.js";
 
 const form = document.getElementById("todo-form");
-const input = document.getElementById("todo-input");
+const inputField = document.getElementById("todo-input");
 const pendingList = document.getElementById("pending-list");
 const doneList = document.getElementById("done-list");
 const deleteAllBtn = document.getElementById("delete-all-btn");
@@ -30,6 +30,33 @@ function showToast(msg, type = "info") {
     toast.style.transform = "translateX(-50%) translateY(8px)";
   }, 2800);
 }
+function updateCounters() {
+  const pCount = pendingList.querySelectorAll("li").length;
+  const dCount = doneList.querySelectorAll("li").length;
+
+  pendingCount.textContent = pCount;
+  doneCount.textContent = dCount;
+
+  emptyPending.style.display = pCount ? "none" : "flex";
+  emptyDone.style.display = dCount ? "none" : "flex";
+}
+
+function onDelete() {
+  updateCounters();
+}
+
+function onToggle(nowCompleted, li) {
+  if (nowCompleted) {
+    doneList.prepend(li);
+  } else {
+    pendingList.prepend(li);
+  }
+  updateCounters();
+}
+
+function onEdit() {}
+
+const callbacks = { onDelete, onToggle, onEdit };
 
 async function render() {
   pendingList.innerHTML = "";
@@ -38,39 +65,38 @@ async function render() {
   let tasks;
   try {
     tasks = await getAll();
-  } catch (err) {
+  } catch {
     showToast("Error al cargar las tareas", "error");
     return;
   }
 
-  const pending = tasks.filter((t) => !t.completed);
-  const completed = tasks.filter((t) => t.completed);
+  tasks
+    .filter((t) => !t.completed)
+    .forEach((t) => pendingList.appendChild(ToDoItem(t, callbacks)));
 
-  pendingCount.textContent = pending.length;
-  doneCount.textContent = completed.length;
+  tasks
+    .filter((t) => t.completed)
+    .forEach((t) => doneList.appendChild(ToDoItem(t, callbacks)));
 
-  emptyPending.style.display = pending.length ? "none" : "flex";
-  emptyDone.style.display = completed.length ? "none" : "flex";
-
-  const callbacks = { onDelete: render, onToggle: render, onEdit: render };
-
-  pending.forEach((t) => pendingList.appendChild(ToDoItem(t, callbacks)));
-  completed.forEach((t) => doneList.appendChild(ToDoItem(t, callbacks)));
+  updateCounters();
 }
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const title = input.value.trim();
+  const title = inputField.value.trim();
   if (!title) return;
 
   const submitBtn = form.querySelector("button[type=submit]");
   submitBtn.disabled = true;
+
   try {
-    await create({ title, completed: false });
-    input.value = "";
-    await render();
+    const newTask = await create({ title, completed: false });
+    inputField.value = "";
+
+    pendingList.appendChild(ToDoItem(newTask, callbacks));
+    updateCounters();
     showToast("Tarea agregada ✓");
-  } catch (err) {
+  } catch {
     showToast("No se pudo agregar la tarea", "error");
   } finally {
     submitBtn.disabled = false;
@@ -78,14 +104,21 @@ form.addEventListener("submit", async (e) => {
 });
 
 deleteAllBtn.addEventListener("click", async () => {
-  if (!confirm("¿Eliminar todas las tareas? Esta acción no se puede deshacer."))
+  if (
+    !confirm(
+      "¿Seguro que quieres eliminar todas las tareas? Esta acción no se puede deshacer.",
+    )
+  )
     return;
   deleteAllBtn.disabled = true;
+
   try {
     await deleteAll();
-    await render();
+    pendingList.innerHTML = "";
+    doneList.innerHTML = "";
+    updateCounters();
     showToast("Todas las tareas eliminadas");
-  } catch (err) {
+  } catch {
     showToast("No se pudieron eliminar las tareas", "error");
   } finally {
     deleteAllBtn.disabled = false;
