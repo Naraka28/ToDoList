@@ -1,4 +1,4 @@
-const BASE_PATH = "http://localhost:3000";
+const BASE_PATH = "https://taskapi-pjm5.onrender.com";
 
 export async function getAll() {
   const response = await fetch(`${BASE_PATH}/tasks`);
