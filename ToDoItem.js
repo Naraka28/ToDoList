@@ -49,16 +49,22 @@ export function ToDoItem(task, { onDelete, onToggle, onEdit }) {
   ].join(" ");
   titleSpan.title = task.completed ? "" : "Doble click para editar";
 
+  const editWrapper = document.createElement("div");
+  editWrapper.className = "flex-1 hidden flex-col gap-0.5";
+
   const editInput = document.createElement("input");
   editInput.type = "text";
   editInput.value = task.title;
   editInput.className =
-    "flex-1 text-stone-700 text-sm font-medium leading-snug border-b-2 border-stone-400 outline-none bg-transparent hidden";
+    "w-full text-stone-700 text-sm font-medium leading-snug border-b-2 border-stone-400 outline-none bg-transparent";
+
+  editWrapper.append(editInput);
 
   const enterEditMode = () => {
     if (task.completed) return;
     titleSpan.classList.add("hidden");
-    editInput.classList.remove("hidden");
+    editWrapper.classList.remove("hidden");
+    editWrapper.classList.add("flex");
     editInput.focus();
     editInput.select();
     confirmBtn.classList.remove("hidden");
@@ -67,7 +73,8 @@ export function ToDoItem(task, { onDelete, onToggle, onEdit }) {
 
   const exitEditMode = (save = false) => {
     titleSpan.classList.remove("hidden");
-    editInput.classList.add("hidden");
+    editWrapper.classList.add("hidden");
+    editWrapper.classList.remove("flex");
     confirmBtn.classList.add("hidden");
     deleteBtn.classList.remove("hidden");
     if (!save) editInput.value = task.title;
@@ -82,15 +89,22 @@ export function ToDoItem(task, { onDelete, onToggle, onEdit }) {
     <polyline points="20 6 9 17 4 12"/>
   </svg>`;
   confirmBtn.className =
-    "hidden shrink-0 p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors duration-150";
+    "hidden shrink-0 self-start p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors duration-150";
   confirmBtn.title = "Confirmar";
 
   const saveEdit = async () => {
     const newTitle = editInput.value.trim();
-    if (!newTitle || newTitle === task.title) {
+
+    if (newTitle === task.title) {
       exitEditMode(false);
       return;
     }
+
+    if (!newTitle) {
+      exitEditMode(false);
+      return;
+    }
+
     confirmBtn.disabled = true;
     try {
       const updated = await editTitleTask(task.id, { title: newTitle });
@@ -123,7 +137,7 @@ export function ToDoItem(task, { onDelete, onToggle, onEdit }) {
     <path d="M9 6V4h6v2"/>
   </svg>`;
   deleteBtn.className = [
-    "shrink-0 p-1.5 rounded-lg text-stone-400",
+    "shrink-0 self-start p-1.5 rounded-lg text-stone-400",
     "opacity-0 group-hover:opacity-100",
     "hover:text-red-500 hover:bg-red-50",
     "transition-all duration-150",
@@ -144,6 +158,6 @@ export function ToDoItem(task, { onDelete, onToggle, onEdit }) {
     }
   });
 
-  li.append(checkbox, titleSpan, editInput, confirmBtn, deleteBtn);
+  li.append(checkbox, titleSpan, editWrapper, confirmBtn, deleteBtn);
   return li;
 }
